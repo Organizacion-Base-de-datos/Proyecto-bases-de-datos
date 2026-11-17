@@ -1,6 +1,6 @@
 <?php 
 
-require_once __DIR__ . '/../includes/app.php';
+require_once __DIR__ . '/ActiveRecord.php';
 
 class Marca extends ActiveRecord{
 
@@ -16,3 +16,5 @@ class Marca extends ActiveRecord{
     }
 
 }
+
+?>

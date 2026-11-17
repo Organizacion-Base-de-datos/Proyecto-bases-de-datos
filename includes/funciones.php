@@ -26,3 +26,5 @@ function iniciarSesion() : void {
         session_start();
     }
 }
+
+?>

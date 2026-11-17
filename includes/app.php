@@ -18,3 +18,5 @@ require_once __DIR__ . '/../models/Venta.php';
 $db = conectarDB();
 
 ActiveRecord::setDB($db);
+
+?>

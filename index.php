@@ -15,7 +15,7 @@
 
     <?php
 
-        $productos = Producto::all();
+        $productos = Venta::all();
         debuguear($productos);
         
     ?>

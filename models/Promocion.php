@@ -1,6 +1,6 @@
 <?php 
 
-require_once __DIR__ . '/../includes/app.php';
+require_once __DIR__ . '/ActiveRecord.php';
 
 class Promocion extends ActiveRecord{
     
@@ -26,3 +26,5 @@ class Promocion extends ActiveRecord{
     }
 
 }
+
+?>
