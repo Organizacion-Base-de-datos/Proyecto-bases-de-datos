@@ -1,13 +1,13 @@
 <?php 
 
-namespace Model;
+require_once __DIR__ . '/../includes/app.php';
 
 class Empleado extends ActiveRecord{
 
-    protected static $tabla = 'Empleados';
-    protected static $columnasDB = ['id', 'nombre', 'apellido', 'nombre_usuario', 'telefono', 'correo', 'sueldo', 'fecha_ingreso', 'activo', 'password', 'rfc', 'curp', 'id_rol'];
+    protected static string $tabla = 'Empleados';
+    protected static array $columnasDB = ['id', 'nombre', 'apellido', 'nombre_usuario', 'telefono', 'correo', 'sueldo', 'fecha_ingreso', 'activo', 'password', 'rfc', 'curp', 'id_rol'];
 
-    public int $id;
+    public $id;
     public $nombre;
     public $apellido;
     public $nombre_usuario;
@@ -22,7 +22,7 @@ class Empleado extends ActiveRecord{
     public $id_rol;
     
     public function __construct($args = []){
-        $this->id = $args['id'] ?? null;
+        $this->id = $args['id'] ?? 0;
         $this->nombre = $args['nombre'] ?? '';
         $this->apellido = $args['apellido'] ?? '';
         $this->nombre_usuario = $args['nombre_usuario'] ?? '';

@@ -1,3 +1,7 @@
+<?php
+    require_once __DIR__ . '/includes/app.php';
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,6 +12,13 @@
 <body>
 
     <h1>[INICIO DE LA PÁGINA]</h1>
+
+    <?php
+
+        $empleados = Empleado::all();
+        debuguear($empleados);
+        
+    ?>
 
 </body>
 </html>

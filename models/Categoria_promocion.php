@@ -1,6 +1,6 @@
 <?php 
 
-namespace Model;
+require_once __DIR__ . '/../includes/app.php';
 
 class Categoria_promocion extends ActiveRecord{
     

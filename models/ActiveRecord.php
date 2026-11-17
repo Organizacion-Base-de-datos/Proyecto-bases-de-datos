@@ -1,35 +1,31 @@
 <?php
 
-namespace Model;
-
 class ActiveRecord
 {
+    protected static ?PDO $db = null;
+    protected static string $tabla = '';
+    protected static array $columnasDB = [];
 
-    // Base DE DATOS
-    protected static $db;
-    protected static $tabla = '';
-    protected static $columnasDB = [];
-
-    // Alertas y Mensajes
-    protected static $alertas = [];
+    protected static array $alertas = [];
 
     // Definir la conexión a la BD - includes/database.php
-    public static function setDB($database)
+    public static function setDB(PDO $database): void
     {
         self::$db = $database;
     }
 
-    public static function setAlerta($tipo, $mensaje)
+    public static function setAlerta(string $tipo, string $mensaje): void
     {
         static::$alertas[$tipo][] = $mensaje;
     }
+
     // Validación
-    public static function getAlertas()
+    public static function getAlertas(): array
     {
         return static::$alertas;
     }
 
-    public function validar()
+    public function validar(): array
     {
         static::$alertas = [];
         return static::$alertas;
@@ -38,134 +34,142 @@ class ActiveRecord
     // Registros - CRUD
     public function guardar()
     {
-        $resultado = '';
         if (!is_null($this->id)) {
-            // actualizar
-            $resultado = $this->actualizar();
+            return $this->actualizar();
         } else {
-            // Creando un nuevo registro
-            $resultado = $this->crear();
+            return $this->crear();
         }
-        return $resultado;
     }
 
-    public static function all()
+    public static function all(): array
     {
         $query = "SELECT * FROM " . static::$tabla;
-        $resultado = self::consultarSQL($query);
-        return $resultado;
+        return self::consultarSQL($query);
     }
 
     // Busca un registro por su id
     public static function find($id)
     {
-        $query = "SELECT * FROM " . static::$tabla  . " WHERE id = {$id}";
-        $resultado = self::consultarSQL($query);
-        return array_shift($resultado);
+        $query = "SELECT * FROM " . static::$tabla . " WHERE id = :id LIMIT 1";
+        $stmt = self::$db->prepare($query);
+        $stmt->execute([':id' => $id]);
+
+        $registro = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $registro ? static::crearObjeto($registro) : null;
     }
 
     // Obtener Registro
-    public static function get($limite)
+    public static function get(int $limite)
     {
-        $query = "SELECT * FROM " . static::$tabla . " LIMIT {$limite}";
-        $resultado = self::consultarSQL($query);
-        return array_shift($resultado);
+        $query = "SELECT * FROM " . static::$tabla . " LIMIT :limite";
+        $stmt = self::$db->prepare($query);
+        $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $registro = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $registro ? static::crearObjeto($registro) : null;
     }
 
-    // ? Busqueda Where con Columna (obtiene solo un registro)
-    public static function where($columna, $valor)
+    public static function where(string $columna, $valor)
     {
-        $query = "SELECT * FROM " . static::$tabla . " WHERE {$columna} = '{$valor}'";
-        $resultado = self::consultarSQL($query);
-        return array_shift($resultado);
-    }
-    
-    // ? Busqueda where con Columna (obtiene todos los registros)
-    public static function belongsTo($columna, $valor){
-        $query = "SELECT * FROM " . static::$tabla . " WHERE {$columna} = '{$valor}'";
-        $resultado = self::consultarSQL($query);
-        return $resultado;
+        $query = "SELECT * FROM " . static::$tabla . " WHERE {$columna} = :valor LIMIT 1";
+        $stmt = self::$db->prepare($query);
+        $stmt->execute([':valor' => $valor]);
+
+        $registro = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $registro ? static::crearObjeto($registro) : null;
     }
 
-    // SQL para Consultas Avanzadas.
-    public static function SQL($consulta)
+    public static function belongsTo(string $columna, $valor): array
     {
-        $query = $consulta;
-        $resultado = self::consultarSQL($query);
-        return $resultado;
-    }
+        $query = "SELECT * FROM " . static::$tabla . " WHERE {$columna} = :valor";
+        $stmt = self::$db->prepare($query);
+        $stmt->execute([':valor' => $valor]);
 
-    // crea un nuevo registro
-    public function crear()
-    {
-        // Sanitizar los datos
-        $atributos = $this->sanitizarAtributos();
-
-        // Insertar en la base de datos
-        $query = " INSERT INTO " . static::$tabla . " ( ";
-        $query .= join(', ', array_keys($atributos));
-        $query .= " ) VALUES ('";
-        $query .= join("', '", array_values($atributos));
-        $query .= "') ";
-
-        // Resultado de la consulta
-        $resultado = self::$db->query($query);
-
-        return [
-            'resultado' =>  $resultado,
-            'id' => self::$db->insert_id
-        ];
-    }
-
-    public function actualizar()
-    {
-        // Sanitizar los datos
-        $atributos = $this->sanitizarAtributos();
-
-        // Iterar para ir agregando cada campo de la BD
-        $valores = [];
-        foreach ($atributos as $key => $value) {
-            $valores[] = "{$key}='{$value}'";
-        }
-
-        $query = "UPDATE " . static::$tabla . " SET ";
-        $query .=  join(', ', $valores);
-        $query .= " WHERE id = '" . self::$db->escape_string($this->id) . "' ";
-        $query .= " LIMIT 1 ";
-
-        // debuguear($query);
-
-        $resultado = self::$db->query($query);
-        return $resultado;
-    }
-
-    // Eliminar un registro - Toma el ID de Active Record
-    public function eliminar()
-    {
-        $query = "DELETE FROM "  . static::$tabla . " WHERE id = " . self::$db->escape_string($this->id) . " LIMIT 1";
-        $resultado = self::$db->query($query);
-        return $resultado;
-    }
-
-    public static function consultarSQL($query)
-    {
-        // Consultar la base de datos
-        $resultado = self::$db->query($query);
-
-        // Iterar los resultados
         $array = [];
-        while ($registro = $resultado->fetch_assoc()) {
+        while ($registro = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $array[] = static::crearObjeto($registro);
         }
-
-        // liberar la memoria
-        $resultado->free();
-
-        // retornar los resultados
         return $array;
     }
 
-    protected static function crearObjeto($registro)
+    // SQL para Consultas Avanzadas
+    public static function SQL(string $consulta): array
+    {
+        return self::consultarSQL($consulta);
+    }
+
+    // Crea un nuevo registro
+    public function crear(): array
+    {
+        $atributos = $this->atributos();
+        $columnas = array_keys($atributos);
+        $placeholders = array_map(fn($col) => ":{$col}", $columnas);
+
+        $query = "INSERT INTO " . static::$tabla . " (" . join(', ', $columnas) . ") ";
+        $query .= "VALUES (" . join(', ', $placeholders) . ")";
+
+        $stmt = self::$db->prepare($query);
+
+        foreach ($atributos as $key => $value) {
+            $stmt->bindValue(":{$key}", $value);
+        }
+
+        $resultado = $stmt->execute();
+
+        return [
+            'resultado' => $resultado,
+            'id' => self::$db->lastInsertId()
+        ];
+    }
+
+    // Actualiza un registro existente
+    public function actualizar(): bool
+    {
+        $atributos = $this->atributos();
+
+        $valores = [];
+        foreach ($atributos as $key => $value) {
+            $valores[] = "{$key} = :{$key}";
+        }
+
+        $query = "UPDATE " . static::$tabla . " SET " . join(', ', $valores);
+        $query .= " WHERE id = :id";
+
+        $stmt = self::$db->prepare($query);
+
+        foreach ($atributos as $key => $value) {
+            $stmt->bindValue(":{$key}", $value);
+        }
+        $stmt->bindValue(':id', $this->id);
+
+        return $stmt->execute();
+    }
+
+    public function eliminar(): bool
+    {
+        $query = "DELETE FROM " . static::$tabla . " WHERE id = :id";
+        $stmt = self::$db->prepare($query);
+        $stmt->bindValue(':id', $this->id);
+
+        return $stmt->execute();
+    }
+
+    public static function consultarSQL(string $query): array
+    {
+        $resultado = self::$db->query($query);
+
+        $array = [];
+        while ($registro = $resultado->fetch(PDO::FETCH_ASSOC)) {
+            $array[] = static::crearObjeto($registro);
+        }
+
+        $resultado->closeCursor();
+
+        return $array;
+    }
+
+    protected static function crearObjeto(array $registro): static
     {
         $objeto = new static;
 
@@ -178,10 +182,7 @@ class ActiveRecord
         return $objeto;
     }
 
-
-
-    // Identificar y unir los atributos de la BD
-    public function atributos()
+    public function atributos(): array
     {
         $atributos = [];
         foreach (static::$columnasDB as $columna) {
@@ -191,17 +192,7 @@ class ActiveRecord
         return $atributos;
     }
 
-    public function sanitizarAtributos(){
-        $atributos = $this->atributos();
-        $sanitizado = [];
-        foreach ($atributos as $key => $value) {
-            $sanitizado[$key] = self::$db->escape_string($value ?? '');
-        }
-        return $sanitizado;
-    }
-
-
-    public function sincronizar($args = [])
+    public function sincronizar(array $args = []): void
     {
         foreach ($args as $key => $value) {
             if (property_exists($this, $key) && !is_null($value)) {
