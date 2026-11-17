@@ -4,10 +4,10 @@ require_once __DIR__ . '/../includes/app.php';
 
 class Proveedor extends ActiveRecord{
     
-    protected static $tabla = 'Proveedores';
-    protected static $columnasDB = ['id', 'nombre', 'nombre_contacto', 'telefono', 'correo', 'direccion', 'rfc', 'activo'];
+    protected static string $tabla = 'Proveedores';
+    protected static array $columnasDB = ['id', 'nombre', 'nombre_contacto', 'telefono', 'correo', 'direccion', 'rfc', 'activo'];
 
-    public int $id;
+    public $id;
     public $nombre;
     public $nombre_contacto;
     public $telefono;
@@ -17,7 +17,7 @@ class Proveedor extends ActiveRecord{
     public $activo;
 
     public function __construct($args = []){
-        $this->id = $args['id'] ?? null;
+        $this->id = $args['id'] ?? 0;
         $this->nombre = $args['nombre'] ?? '';
         $this->nombre_contacto = $args['nombre_contacto'] ?? '';
         $this->telefono = $args['telefono'] ?? '';

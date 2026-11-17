@@ -4,16 +4,16 @@ require_once __DIR__ . '/../includes/app.php';
 
 class Cliente extends ActiveRecord{
 
-    protected static $tabla = 'Clientes';
-    protected static $columnasDB = ['id', 'nombre', 'rfc', 'direccion_fiscal'];
+    protected static string $tabla = 'Clientes';
+    protected static array $columnasDB = ['id', 'nombre', 'rfc', 'direccion_fiscal'];
 
-    public int $id;
+    public $id;
     public $nombre;
     public $rfc;
     public $direccion_fiscal;
 
     public function __construct($args = []){
-        $this->id = $args['id'] ?? null;
+        $this->id = $args['id'] ?? 0;
         $this->nombre = $args['nombre'] ?? '';
         $this->rfc = $args['rfc'] ?? '';
         $this->direccion_fiscal = $args['direccion_fiscal'] ?? '';

@@ -4,10 +4,10 @@ require_once __DIR__ . '/../includes/app.php';
 
 class Producto extends ActiveRecord{
     
-    protected static $tabla = 'Productos';
-    protected static $columnasDB = ['id', 'nombre', 'stock', 'precio_costo', 'precio_venta', 'id_marca', 'id_categoria', 'id_proveedor'];
+    protected static string $tabla = 'Productos';
+    protected static array $columnasDB = ['id', 'nombre', 'stock', 'precio_costo', 'precio_venta', 'id_marca', 'id_categoria', 'id_proveedor'];
 
-    public int $id;
+    public $id;
     public $nombre;
     public $stock;
     public $precio_costo;
@@ -17,7 +17,7 @@ class Producto extends ActiveRecord{
     public $id_proveedor;
 
     public function __construct($args = []){
-        $this->id = $args['id'] ?? null;
+        $this->id = $args['id'] ?? 0;
         $this->nombre = $args['nombre'] ?? '';
         $this->stock = $args['stock'] ?? '';
         $this->precio_costo = $args['precio_costo'] ?? '';

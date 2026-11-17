@@ -4,14 +4,14 @@ require_once __DIR__ . '/../includes/app.php';
 
 class Categoria extends ActiveRecord{
     
-    protected static $tabla = 'categoria';
-    protected static $columnasDB = ['id', 'nombre'];
+    protected static string $tabla = 'Categorias';
+    protected static array $columnasDB = ['id', 'nombre'];
 
-    public int $id;
+    public $id;
     public $nombre;
 
     public function __construct($args = []){
-        $this->id = $args['id'] ?? null;
+        $this->id = $args['id'] ?? 0;
         $this->nombre = $args['nombre'] ?? '';
     }
 

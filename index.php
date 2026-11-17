@@ -15,8 +15,8 @@
 
     <?php
 
-        $empleados = Empleado::all();
-        debuguear($empleados);
+        $productos = Producto::all();
+        debuguear($productos);
         
     ?>
 
