@@ -59,7 +59,7 @@
         <p style="color:green;">Producto guardado correctamente</p>
     <?php endif; ?>
 
-    <form method="POST" action="">
+    <form method="POST">
         <p>
             <label>Nombre</label><br>
             <input type="text" name="nombre">
@@ -108,16 +108,26 @@
 
     <h2>Productos registrados</h2>
     <table border="1" cellpadding="4">
-        <tr><th>ID</th><th>Nombre</th><th>Stock</th><th>Costo</th><th>Venta</th></tr>
-        <?php foreach ($productos as $p): ?>
+        <thead>
             <tr>
-                <td><?php echo s($p->id); ?></td>
-                <td><?php echo s($p->nombre); ?></td>
-                <td><?php echo s($p->stock); ?></td>
-                <td><?php echo s($p->precio_costo); ?></td>
-                <td><?php echo s($p->precio_venta); ?></td>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Stock</th>
+                <th>Costo</th>
+                <th>Venta</th>
             </tr>
-        <?php endforeach; ?>
+        </thead>
+        <tbody>
+            <?php foreach ($productos as $producto): ?>
+                <tr>
+                    <td><?php echo s($producto->id); ?></td>
+                    <td><?php echo s($producto->nombre); ?></td>
+                    <td><?php echo s($producto->stock); ?></td>
+                    <td><?php echo s($producto->precio_costo); ?></td>
+                    <td><?php echo s($producto->precio_venta); ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
     </table>
 </body>
 </html>
