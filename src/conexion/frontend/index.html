@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inicio - Papelería</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+<div id="mensaje-global" class="msg-global"></div>
+
+<div class="app">
+
+    <!-- ===== Menú lateral (se repetirá igual en todas las pantallas) ===== -->
+    <aside class="menu-lateral">
+        <div class="logo">Papelería</div>
+        <nav>
+            <a href="index.html" class="activo">Inicio</a>
+            <a href="ventas.html">Ventas</a>
+            <a href="productos.html">Productos</a>
+            <a href="clientes.html">Clientes</a>
+            <a href="proveedores.html">Proveedores</a>
+            <a href="promociones.html">Promociones</a>
+            <a href="empleados.html">Empleados</a>
+        </nav>
+        <div class="usuario">
+            <span id="nombre-usuario">Empleado</span><br>
+            <a href="login.html">Cerrar sesión</a>
+        </div>
+    </aside>
+
+    <!-- ===== Contenido de la pantalla ===== -->
+    <main class="contenido">
+        <h2>Bienvenido</h2>
+        <p>Elige una opción para comenzar.</p>
+
+        <div class="tarjetas">
+            <a class="tarjeta" href="ventas.html">
+                <h3>Ventas</h3>
+                <p>Registrar una venta</p>
+            </a>
+            <a class="tarjeta" href="productos.html">
+                <h3>Productos</h3>
+                <p>Inventario y precios</p>
+            </a>
+            <a class="tarjeta" href="clientes.html">
+                <h3>Clientes</h3>
+                <p>Alta y consulta</p>
+            </a>
+            <a class="tarjeta" href="proveedores.html">
+                <h3>Proveedores</h3>
+                <p>Quién nos surte</p>
+            </a>
+            <a class="tarjeta" href="promociones.html">
+                <h3>Promociones</h3>
+                <p>Descuentos por categoría</p>
+            </a>
+            <a class="tarjeta" href="empleados.html">
+                <h3>Empleados</h3>
+                <p>Solo administrador</p>
+            </a>
+        </div>
+    </main>
+
+</div>
+
+<script src="js/comun.js"></script>
+</body>
+</html>
