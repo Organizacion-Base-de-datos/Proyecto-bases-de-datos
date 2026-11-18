@@ -1,26 +1,26 @@
 <?php
-require_once __DIR__ . '/includes/app.php';
+    require_once __DIR__ . '/includes/app.php';
 
-$alertas = [];
-$exito = false;
+    $alertas = [];
+    $exito = false;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre = trim($_POST['nombre'] ?? '');
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $nombre = trim($_POST['nombre'] ?? '');
 
-    if ($nombre === '') {
-        $alertas[] = 'El nombre es obligatorio';
+        if ($nombre === '') {
+            $alertas[] = 'El nombre es obligatorio';
+        }
+
+        if (empty($alertas)) {
+            $marca = new Marca(['nombre' => $nombre]);
+            $resultado = $marca->crear();
+            $exito = $resultado['resultado'];
+        }
     }
 
-    if (empty($alertas)) {
-        $marca = new Marca(['nombre' => $nombre]);
-        // Usamos crear() directo (ver nota sobre guardar() en la explicación)
-        $resultado = $marca->crear();
-        $exito = $resultado['resultado'];
-    }
-}
-
-$marcas = Marca::all();
+    $marcas = Marca::all();
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>

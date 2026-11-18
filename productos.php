@@ -1,45 +1,45 @@
 <?php
-require_once __DIR__ . '/includes/app.php';
+    require_once __DIR__ . '/includes/app.php';
 
-$alertas = [];
-$exito = false;
+    $alertas = [];
+    $exito = false;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre       = trim($_POST['nombre'] ?? '');
-    $stock        = $_POST['stock'] ?? '';
-    $precio_costo = $_POST['precio_costo'] ?? '';
-    $precio_venta = $_POST['precio_venta'] ?? '';
-    $id_marca     = $_POST['id_marca'] ?? '';
-    $id_categoria = $_POST['id_categoria'] ?? '';
-    $id_proveedor = $_POST['id_proveedor'] ?? '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $nombre       = trim($_POST['nombre'] ?? '');
+        $stock        = $_POST['stock'] ?? '';
+        $precio_costo = $_POST['precio_costo'] ?? '';
+        $precio_venta = $_POST['precio_venta'] ?? '';
+        $id_marca     = $_POST['id_marca'] ?? '';
+        $id_categoria = $_POST['id_categoria'] ?? '';
+        $id_proveedor = $_POST['id_proveedor'] ?? '';
 
-    if ($nombre === '') $alertas[] = 'El nombre es obligatorio';
-    if (!ctype_digit((string)$stock)) $alertas[] = 'El stock debe ser un entero';
-    if (!is_numeric($precio_costo)) $alertas[] = 'El precio de costo debe ser numérico';
-    if (!is_numeric($precio_venta)) $alertas[] = 'El precio de venta debe ser numérico';
-    if (!ctype_digit((string)$id_marca)) $alertas[] = 'Selecciona una marca';
-    if (!ctype_digit((string)$id_categoria)) $alertas[] = 'Selecciona una categoría';
-    if (!ctype_digit((string)$id_proveedor)) $alertas[] = 'Selecciona un proveedor';
+        if ($nombre === '') $alertas[] = 'El nombre es obligatorio';
+        if (!ctype_digit((string)$stock)) $alertas[] = 'El stock debe ser un entero';
+        if (!is_numeric($precio_costo)) $alertas[] = 'El precio de costo debe ser numérico';
+        if (!is_numeric($precio_venta)) $alertas[] = 'El precio de venta debe ser numérico';
+        if (!ctype_digit((string)$id_marca)) $alertas[] = 'Selecciona una marca';
+        if (!ctype_digit((string)$id_categoria)) $alertas[] = 'Selecciona una categoría';
+        if (!ctype_digit((string)$id_proveedor)) $alertas[] = 'Selecciona un proveedor';
 
-    if (empty($alertas)) {
-        $producto = new Producto([
-            'nombre'       => $nombre,
-            'stock'        => (int)$stock,
-            'precio_costo' => (float)$precio_costo,
-            'precio_venta' => (float)$precio_venta,
-            'id_marca'     => (int)$id_marca,
-            'id_categoria' => (int)$id_categoria,
-            'id_proveedor' => (int)$id_proveedor,
-        ]);
-        $resultado = $producto->crear();
-        $exito = $resultado['resultado'];
+        if (empty($alertas)) {
+            $producto = new Producto([
+                'nombre'       => $nombre,
+                'stock'        => (int)$stock,
+                'precio_costo' => (float)$precio_costo,
+                'precio_venta' => (float)$precio_venta,
+                'id_marca'     => (int)$id_marca,
+                'id_categoria' => (int)$id_categoria,
+                'id_proveedor' => (int)$id_proveedor,
+            ]);
+            $resultado = $producto->crear();
+            $exito = $resultado['resultado'];
+        }
     }
-}
 
-$marcas = Marca::all();
-$categorias = Categoria::all();
-$proveedores = Proveedor::all();
-$productos = Producto::all();
+    $marcas = Marca::all();
+    $categorias = Categoria::all();
+    $proveedores = Proveedor::all();
+    $productos = Producto::all();
 ?>
 <!DOCTYPE html>
 <html lang="es">
