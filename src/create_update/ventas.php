@@ -1,5 +1,5 @@
 <?php
-    require_once __DIR__ . '/includes/app.php';
+    require_once __DIR__ . '../../../includes/app.php';
 
     date_default_timezone_set('America/Mexico_City');
 
@@ -7,38 +7,76 @@
     $exito = false;
     $totalVenta = 0;
 
-    $clientes = Cliente::all();
-    $empleados = array_filter(Empleado::all(), fn($e) => $e->activo);
-    $productos = Producto::SQL("SELECT * FROM Productos WHERE stock > 0 ORDER BY nombre");
-
     $id_cliente_sel = '';
     $id_empleado_sel = '';
     $productos_sel = [];
+    $id_editar = null;
+    $venta_editar = null;
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editar'])) {
+        $v = ctype_digit((string)$_GET['editar']) ? Venta::find((int)$_GET['editar']) : null;
+        if ($v) {
+            $id_editar = (int)$v->id;
+            $venta_editar = $v;
+            $id_cliente_sel = (string)$v->id_cliente;
+            $id_empleado_sel = (string)$v->id_empleado;
+        } else {
+            $alertas[] = 'La venta que quieres editar no existe';
+        }
+    }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $idPost          = $_POST['id'] ?? '';
+        $editando        = $idPost !== '';
         $id_cliente_sel  = $_POST['id_cliente'] ?? '';
         $id_empleado_sel = $_POST['id_empleado'] ?? '';
         $productos_sel   = $_POST['productos'] ?? [];
 
+        if ($editando) {
+            $venta_editar = ctype_digit((string)$idPost) ? Venta::find((int)$idPost) : null;
+            if (!$venta_editar) {
+                $alertas[] = 'La venta que intentas actualizar no existe';
+            } else {
+                $id_editar = (int)$idPost;
+            }
+        }
+
         if (!ctype_digit((string)$id_cliente_sel) || !Cliente::find((int)$id_cliente_sel)) {
             $alertas[] = 'Selecciona un cliente válido';
         }
-        if (!ctype_digit((string)$id_empleado_sel) || !Empleado::find((int)$id_empleado_sel)) {
+
+        $empleadoSel = ctype_digit((string)$id_empleado_sel) ? Empleado::find((int)$id_empleado_sel) : null;
+        if (!$empleadoSel) {
             $alertas[] = 'Selecciona un empleado válido';
+        } elseif (!$editando && !$empleadoSel->activo) {
+            $alertas[] = 'El empleado seleccionado está inactivo';
         }
-        if (empty($productos_sel)) {
-            $alertas[] = 'Selecciona al menos un producto';
-        } else {
-            foreach ($productos_sel as $idp) {
-                if (!ctype_digit((string)$idp)) {
-                    $alertas[] = 'Producto inválido';
-                    break;
+
+        if (!$editando) {
+            if (empty($productos_sel)) {
+                $alertas[] = 'Selecciona al menos un producto';
+            } else {
+                foreach ($productos_sel as $idp) {
+                    if (!ctype_digit((string)$idp)) {
+                        $alertas[] = 'Producto inválido';
+                        break;
+                    }
                 }
             }
         }
 
         if (empty($alertas)) {
             try {
+                if ($editando) {
+                    $venta_editar->sincronizar([
+                        'id_cliente'  => (int)$id_cliente_sel,
+                        'id_empleado' => (int)$id_empleado_sel,
+                    ]);
+                    $venta_editar->actualizar();
+                    header('Location: ventas.php?msg=actualizado');
+                    exit;
+                }
+
                 $db->beginTransaction();
 
                 $total = 0;
@@ -83,7 +121,6 @@
                 $id_cliente_sel = '';
                 $id_empleado_sel = '';
                 $productos_sel = [];
-                $productos = Producto::SQL("SELECT * FROM Productos WHERE stock > 0 ORDER BY nombre");
             } catch (Exception $e) {
                 if ($db->inTransaction()) {
                     $db->rollBack();
@@ -92,6 +129,21 @@
             }
         }
     }
+
+    $mensajes = [
+        'actualizado' => ['green', 'Venta actualizada correctamente'],
+        'eliminado'   => ['green', 'Venta eliminada correctamente (el stock se devolvió)'],
+        'en_uso'      => ['red',   'No se puede eliminar esta venta'],
+        'no_existe'   => ['red',   'El registro ya no existe'],
+        'error'       => ['red',   'Ocurrió un error'],
+    ];
+    $msg = $_GET['msg'] ?? '';
+
+    $clientes = Cliente::all();
+    $empleados = $id_editar
+        ? Empleado::all()
+        : array_filter(Empleado::all(), fn($e) => $e->activo);
+    $productos = Producto::SQL("SELECT * FROM Productos WHERE stock > 0 ORDER BY nombre");
 
     $ventas = Venta::SQL("SELECT * FROM Ventas ORDER BY fecha DESC");
 ?>
@@ -103,7 +155,11 @@
     <title>Ventas</title>
 </head>
 <body>
-    <h1>Registrar venta</h1>
+    <h1><?php echo $id_editar ? 'Editar venta #' . s($id_editar) : 'Registrar venta'; ?></h1>
+
+    <?php if (isset($mensajes[$msg])): ?>
+        <p style="color:<?php echo $mensajes[$msg][0]; ?>;"><?php echo s($mensajes[$msg][1]); ?></p>
+    <?php endif; ?>
 
     <?php foreach ($alertas as $alerta): ?>
         <p style="color:red;"><?php echo s($alerta); ?></p>
@@ -113,7 +169,7 @@
         <p style="color:green;">Venta guardada correctamente. Total: $<?php echo number_format($totalVenta, 2); ?></p>
     <?php endif; ?>
 
-    <?php if (empty($clientes) || empty($empleados) || empty($productos)): ?>
+    <?php if (empty($clientes) || empty($empleados) || (!$id_editar && empty($productos))): ?>
         <p>
             Para registrar una venta necesitas al menos:
             un <a href="clientes.php">cliente</a>,
@@ -121,7 +177,11 @@
             un <a href="productos.php">producto con stock</a>.
         </p>
     <?php else: ?>
-    <form method="POST" action="">
+    <form method="POST" action="ventas.php">
+        <?php if ($id_editar): ?>
+            <input type="hidden" name="id" value="<?php echo s($id_editar); ?>">
+        <?php endif; ?>
+
         <p>
             <label for="id_cliente">Cliente</label><br>
             <select id="id_cliente" name="id_cliente">
@@ -145,26 +205,48 @@
             </select>
         </p>
 
-        <fieldset>
-            <legend>Productos</legend>
-            <?php foreach ($productos as $p): ?>
-                <label>
-                    <input type="checkbox" name="productos[]"
-                           value="<?php echo s($p->id); ?>"
-                           data-precio="<?php echo s($p->precio_venta); ?>"
-                           <?php echo in_array((string)$p->id, array_map('strval', $productos_sel), true) ? 'checked' : ''; ?>>
-                    <?php echo s($p->nombre); ?> —
-                    $<?php echo number_format((float)$p->precio_venta, 2); ?>
-                    (stock: <?php echo s($p->stock); ?>)
-                </label><br>
-            <?php endforeach; ?>
-        </fieldset>
+        <?php if ($id_editar && $venta_editar): ?>
+            <?php
+                $nombresVenta = [];
+                foreach (Venta_producto::belongsTo('id_venta', $venta_editar->id) as $det) {
+                    $prod = Producto::find($det->id_producto);
+                    if ($prod) {
+                        $nombresVenta[] = $prod->nombre;
+                    }
+                }
+            ?>
+            <p>
+                <strong>Productos:</strong> <?php echo s(implode(', ', $nombresVenta)); ?><br>
+                <strong>Total:</strong> $<?php echo number_format((float)$venta_editar->total, 2); ?><br>
+                <small>En una venta solo se pueden corregir el cliente y el empleado.
+                Para cambiar productos, elimina la venta (se devuelve el stock) y registra otra.</small>
+            </p>
+            <input type="submit" value="Actualizar venta">
+            <a href="ventas.php">Cancelar</a>
+        <?php else: ?>
+            <fieldset>
+                <legend>Productos</legend>
+                <?php foreach ($productos as $p): ?>
+                    <label>
+                        <input type="checkbox" name="productos[]"
+                               value="<?php echo s($p->id); ?>"
+                               data-precio="<?php echo s($p->precio_venta); ?>"
+                               <?php echo in_array((string)$p->id, array_map('strval', $productos_sel), true) ? 'checked' : ''; ?>>
+                        <?php echo s($p->nombre); ?> —
+                        $<?php echo number_format((float)$p->precio_venta, 2); ?>
+                        (stock: <?php echo s($p->stock); ?>)
+                    </label><br>
+                <?php endforeach; ?>
+            </fieldset>
 
-        <p><strong>Total: $<span id="total">0.00</span></strong></p>
-        <input type="submit" value="Registrar venta">
+            <p><strong>Total: $<span id="total">0.00</span></strong></p>
+            <input type="submit" value="Registrar venta">
+        <?php endif; ?>
     </form>
 
+    <?php if (!$id_editar): ?>
     <script>
+        // Solo es una vista previa; el total real lo calcula el servidor
         const checks = document.querySelectorAll('input[name="productos[]"]');
         const totalEl = document.getElementById('total');
         function actualizarTotal() {
@@ -176,11 +258,12 @@
         actualizarTotal();
     </script>
     <?php endif; ?>
+    <?php endif; ?>
 
     <h2>Ventas registradas</h2>
     <table border="1" cellpadding="4">
         <tr>
-            <th>ID</th><th>Fecha</th><th>Cliente</th><th>Empleado</th><th>Productos</th><th>Total</th>
+            <th>ID</th><th>Fecha</th><th>Cliente</th><th>Empleado</th><th>Productos</th><th>Total</th><th>Acciones</th>
         </tr>
         <?php foreach ($ventas as $v): ?>
             <?php
@@ -201,6 +284,16 @@
                 <td><?php echo $emp ? s($emp->nombre . ' ' . $emp->apellido) : '—'; ?></td>
                 <td><?php echo s(implode(', ', $nombresProductos)); ?></td>
                 <td>$<?php echo number_format((float)$v->total, 2); ?></td>
+                <td>
+                    <a href="ventas.php?editar=<?php echo s($v->id); ?>">Editar</a>
+
+                    <form method="POST" action="eliminar.php" style="display:inline;"
+                          onsubmit="return confirm('¿Eliminar esta venta? Se devolverá el stock de sus productos.');">
+                        <input type="hidden" name="tipo" value="ventas">
+                        <input type="hidden" name="id" value="<?php echo s($v->id); ?>">
+                        <input type="submit" value="Eliminar">
+                    </form>
+                </td>
             </tr>
         <?php endforeach; ?>
     </table>

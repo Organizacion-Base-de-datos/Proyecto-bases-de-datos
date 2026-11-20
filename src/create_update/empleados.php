@@ -1,18 +1,76 @@
 <?php
-    require_once __DIR__ . '/includes/app.php';
+    require_once __DIR__ . '../../../includes/app.php';
 
     $alertas = [];
     $exito = false;
 
     $roles = Rol::all();
 
-    $datos = [
+    $vacio = [
         'nombre' => '', 'apellido' => '', 'nombre_usuario' => '', 'telefono' => '',
         'correo' => '', 'sueldo' => '', 'fecha_ingreso' => date('Y-m-d'),
         'rfc' => '', 'curp' => '', 'id_rol' => '', 'activo' => '1',
     ];
+    $datos = $vacio;
+    $id_editar = null;
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['editar'])) {
+        $emp = ctype_digit((string)$_GET['editar']) ? Empleado::find((int)$_GET['editar']) : null;
+        if ($emp) {
+            $id_editar = (int)$emp->id;
+            $datos = [
+                'nombre'         => $emp->nombre,
+                'apellido'       => $emp->apellido,
+                'nombre_usuario' => $emp->nombre_usuario,
+                'telefono'       => $emp->telefono,
+                'correo'         => $emp->correo,
+                'sueldo'         => $emp->sueldo,
+                'fecha_ingreso'  => $emp->fecha_ingreso,
+                'rfc'            => $emp->rfc,
+                'curp'           => $emp->curp,
+                'id_rol'         => $emp->id_rol,
+                'activo'         => $emp->activo ? '1' : '0',
+            ];
+        } else {
+            $alertas[] = 'El empleado que quieres editar no existe';
+        }
+    }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+        if (($_POST['accion'] ?? '') === 'cambiar_estado') {
+            $id = $_POST['id'] ?? '';
+            $msg = 'error';
+
+            if (ctype_digit((string)$id)) {
+                $emp = Empleado::find((int)$id);
+                if ($emp) {
+                    $emp->activo = $emp->activo ? '0' : '1';
+                    try {
+                        $emp->actualizar();
+                        $msg = $emp->activo === '1' ? 'activado' : 'desactivado';
+                    } catch (PDOException $e) {
+                        $msg = 'error';
+                    }
+                } else {
+                    $msg = 'no_existe';
+                }
+            }
+            header("Location: empleados.php?msg={$msg}");
+            exit;
+        }
+
+        $idPost   = $_POST['id'] ?? '';
+        $editando = $idPost !== '';
+
+        if ($editando) {
+            if (!ctype_digit((string)$idPost) || !Empleado::find((int)$idPost)) {
+                $alertas[] = 'El empleado que intentas actualizar no existe';
+            } else {
+                $id_editar = (int)$idPost;
+            }
+        }
+
         $datos['nombre']         = trim($_POST['nombre'] ?? '');
         $datos['apellido']       = trim($_POST['apellido'] ?? '');
         $datos['nombre_usuario'] = trim($_POST['nombre_usuario'] ?? '');
@@ -35,8 +93,11 @@
 
         if ($datos['nombre_usuario'] === '' || strlen($datos['nombre_usuario']) > 30) {
             $alertas[] = 'El nombre de usuario es obligatorio (máximo 30 caracteres)';
-        } elseif (Empleado::where('nombre_usuario', $datos['nombre_usuario'])) {
-            $alertas[] = 'Ese nombre de usuario ya está en uso';
+        } else {
+            $otro = Empleado::where('nombre_usuario', $datos['nombre_usuario']);
+            if ($otro && (int)$otro->id !== (int)$id_editar) {
+                $alertas[] = 'Ese nombre de usuario ya está en uso';
+            }
         }
 
         if ($datos['telefono'] === '' || strlen($datos['telefono']) > 15) {
@@ -47,6 +108,11 @@
             $alertas[] = 'El correo no es válido';
         } elseif (strlen($datos['correo']) > 100) {
             $alertas[] = 'El correo no puede pasar de 100 caracteres';
+        } else {
+            $otro = Empleado::where('correo', $datos['correo']);
+            if ($otro && (int)$otro->id !== (int)$id_editar) {
+                $alertas[] = 'Ya existe un empleado con ese correo';
+            }
         }
 
         if (!is_numeric($datos['sueldo']) || $datos['sueldo'] < 0 || $datos['sueldo'] > 99999999.99) {
@@ -57,20 +123,27 @@
             $alertas[] = 'La fecha de ingreso es obligatoria';
         }
 
-        if (strlen($password) < 8) {
+        if ($editando && $password === '') {
+        } elseif (strlen($password) < 8) {
             $alertas[] = 'La contraseña debe tener al menos 8 caracteres';
         }
 
         if (strlen($datos['rfc']) !== 13) {
             $alertas[] = 'El RFC debe tener 13 caracteres';
-        } elseif (Empleado::where('rfc', $datos['rfc'])) {
-            $alertas[] = 'Ya existe un empleado con ese RFC';
+        } else {
+            $otro = Empleado::where('rfc', $datos['rfc']);
+            if ($otro && (int)$otro->id !== (int)$id_editar) {
+                $alertas[] = 'Ya existe un empleado con ese RFC';
+            }
         }
 
         if (strlen($datos['curp']) !== 18) {
             $alertas[] = 'El CURP debe tener 18 caracteres';
-        } elseif (Empleado::where('curp', $datos['curp'])) {
-            $alertas[] = 'Ya existe un empleado con ese CURP';
+        } else {
+            $otro = Empleado::where('curp', $datos['curp']);
+            if ($otro && (int)$otro->id !== (int)$id_editar) {
+                $alertas[] = 'Ya existe un empleado con ese CURP';
+            }
         }
 
         if (!ctype_digit((string)$datos['id_rol']) || !Rol::find((int)$datos['id_rol'])) {
@@ -78,36 +151,52 @@
         }
 
         if (empty($alertas)) {
+            $valores = [
+                'nombre'         => $datos['nombre'],
+                'apellido'       => $datos['apellido'],
+                'nombre_usuario' => $datos['nombre_usuario'],
+                'telefono'       => $datos['telefono'],
+                'correo'         => $datos['correo'],
+                'sueldo'         => (float)$datos['sueldo'],
+                'fecha_ingreso'  => $datos['fecha_ingreso'],
+                'activo'         => $datos['activo'],
+                'rfc'            => $datos['rfc'],
+                'curp'           => $datos['curp'],
+                'id_rol'         => (int)$datos['id_rol'],
+            ];
             try {
-                $empleado = new Empleado([
-                    'nombre'         => $datos['nombre'],
-                    'apellido'       => $datos['apellido'],
-                    'nombre_usuario' => $datos['nombre_usuario'],
-                    'telefono'       => $datos['telefono'],
-                    'correo'         => $datos['correo'],
-                    'sueldo'         => (float)$datos['sueldo'],
-                    'fecha_ingreso'  => $datos['fecha_ingreso'],
-                    'activo'         => $datos['activo'],
-                    'password'       => password_hash($password, PASSWORD_BCRYPT),
-                    'rfc'            => $datos['rfc'],
-                    'curp'           => $datos['curp'],
-                    'id_rol'         => (int)$datos['id_rol'],
-                ]);
+                if ($editando) {
+                    $empleado = Empleado::find($id_editar);
+                    $empleado->sincronizar($valores);
+                    if ($password !== '') {
+                        $empleado->password = password_hash($password, PASSWORD_BCRYPT);
+                    }
+                    $empleado->actualizar();
+                    header('Location: empleados.php?msg=actualizado');
+                    exit;
+                }
+
+                $valores['password'] = password_hash($password, PASSWORD_BCRYPT);
+                $empleado = new Empleado($valores);
                 $resultado = $empleado->crear();
                 $exito = $resultado['resultado'];
-
                 if ($exito) {
-                    $datos = [
-                        'nombre' => '', 'apellido' => '', 'nombre_usuario' => '', 'telefono' => '',
-                        'correo' => '', 'sueldo' => '', 'fecha_ingreso' => date('Y-m-d'),
-                        'rfc' => '', 'curp' => '', 'id_rol' => '', 'activo' => '1',
-                    ];
+                    $datos = $vacio;
                 }
             } catch (PDOException $e) {
                 $alertas[] = 'Error al guardar: ' . $e->getMessage();
             }
         }
     }
+
+    $mensajes = [
+        'actualizado' => ['green', 'Empleado actualizado correctamente'],
+        'activado'    => ['green', 'Empleado activado'],
+        'desactivado' => ['green', 'Empleado desactivado'],
+        'no_existe'   => ['red',   'El empleado ya no existe'],
+        'error'       => ['red',   'Ocurrió un error'],
+    ];
+    $msg = $_GET['msg'] ?? '';
 
     $empleados = Empleado::all();
 ?>
@@ -120,7 +209,11 @@
     <title>Empleados</title>
 </head>
 <body>
-    <h1>Registrar empleado</h1>
+    <h1><?php echo $id_editar ? 'Editar empleado' : 'Registrar empleado'; ?></h1>
+
+    <?php if (isset($mensajes[$msg])): ?>
+        <p style="color:<?php echo $mensajes[$msg][0]; ?>;"><?php echo s($mensajes[$msg][1]); ?></p>
+    <?php endif; ?>
 
     <?php foreach ($alertas as $alerta): ?>
         <p style="color:red;"><?php echo s($alerta); ?></p>
@@ -133,7 +226,11 @@
     <?php if (empty($roles)): ?>
         <p>Primero registra al menos un rol en <a href="rol.php">rol.php</a>.</p>
     <?php else: ?>
-    <form method="POST" action="">
+    <form method="POST" action="empleados.php">
+        <?php if ($id_editar): ?>
+            <input type="hidden" name="id" value="<?php echo s($id_editar); ?>">
+        <?php endif; ?>
+
         <p>
             <label for="nombre">Nombre</label><br>
             <input type="text" id="nombre" name="nombre" maxlength="50" value="<?php echo s($datos['nombre']); ?>">
@@ -147,7 +244,9 @@
             <input type="text" id="nombre_usuario" name="nombre_usuario" maxlength="30" value="<?php echo s($datos['nombre_usuario']); ?>">
         </p>
         <p>
-            <label for="password">Contraseña (mínimo 8 caracteres)</label><br>
+            <label for="password">
+                <?php echo $id_editar ? 'Nueva contraseña (déjala vacía para no cambiarla)' : 'Contraseña (mínimo 8 caracteres)'; ?>
+            </label><br>
             <input type="password" id="password" name="password" autocomplete="new-password">
         </p>
         <p>
@@ -190,7 +289,11 @@
                 <input type="checkbox" name="activo" value="1" <?php echo $datos['activo'] === '1' ? 'checked' : ''; ?>> Activo
             </label>
         </p>
-        <input type="submit" value="Guardar empleado">
+
+        <input type="submit" value="<?php echo $id_editar ? 'Actualizar empleado' : 'Guardar empleado'; ?>">
+        <?php if ($id_editar): ?>
+            <a href="empleados.php">Cancelar</a>
+        <?php endif; ?>
     </form>
     <?php endif; ?>
 
@@ -209,7 +312,8 @@
                 <th>RFC</th>
                 <th>CURP</th>
                 <th>Rol</th>
-                <th>Activo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -227,7 +331,17 @@
                     <td><?php echo s($emp->rfc); ?></td>
                     <td><?php echo s($emp->curp); ?></td>
                     <td><?php echo $rolEmp ? s($rolEmp->nombre) : '—'; ?></td>
-                    <td><?php echo $emp->activo ? 'Sí' : 'No'; ?></td>
+                    <td><?php echo $emp->activo ? 'Activo' : 'Inactivo'; ?></td>
+                    <td>
+                        <a href="empleados.php?editar=<?php echo s($emp->id); ?>">Editar</a>
+
+                        <form method="POST" action="empleados.php" style="display:inline;"
+                              onsubmit="return confirm('¿Cambiar el estado de este empleado?');">
+                            <input type="hidden" name="accion" value="cambiar_estado">
+                            <input type="hidden" name="id" value="<?php echo s($emp->id); ?>">
+                            <input type="submit" value="<?php echo $emp->activo ? 'Desactivar' : 'Activar'; ?>">
+                        </form>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
