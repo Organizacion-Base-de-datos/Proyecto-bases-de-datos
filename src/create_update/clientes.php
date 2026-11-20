@@ -1,5 +1,6 @@
 <?php
-    require_once __DIR__ . '../../../includes/app.php';
+    require_once __DIR__ . '/../../includes/app.php';
+    requerirAcceso('clientes');
 
     $alertas = [];
     $exito = false;
@@ -94,29 +95,29 @@
 
     $clientes = Cliente::all();
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes</title>
-</head>
-<body>
-    <h1><?php echo $id_editar ? 'Editar cliente' : 'Registrar cliente'; ?></h1>
+<?php require_once __DIR__ . '/../../views/header.php'; ?>
+
+    <div class="encabezado-pagina">
+        <h1>Clientes</h1>
+        <button type="button" class="btn" id="btn-nuevo" aria-controls="panel-form">+ Nuevo</button>
+    </div>
 
     <?php if (isset($mensajes[$msg])): ?>
-        <p style="color:<?php echo $mensajes[$msg][0]; ?>;"><?php echo s($mensajes[$msg][1]); ?></p>
+        <p class="aviso aviso-<?php echo $mensajes[$msg][0] === 'green' ? 'ok' : 'error'; ?>"><?php echo s($mensajes[$msg][1]); ?></p>
     <?php endif; ?>
 
     <?php foreach ($alertas as $alerta): ?>
-        <p style="color:red;"><?php echo s($alerta); ?></p>
+        <p class="aviso aviso-error aviso-form"><?php echo s($alerta); ?></p>
     <?php endforeach; ?>
 
     <?php if ($exito): ?>
-        <p style="color:green;">Cliente guardado correctamente</p>
+        <p class="aviso aviso-ok">Cliente guardado correctamente</p>
     <?php endif; ?>
 
-    <form method="POST" action="clientes.php">
+    <section class="tarjeta panel-form" id="panel-form">
+        <h2><?php echo $id_editar ? 'Editar cliente' : 'Registrar cliente'; ?></h2>
+
+    <form method="POST" action="clientes.php" class="form-registro">
         <?php if ($id_editar): ?>
             <input type="hidden" name="id" value="<?php echo s($id_editar); ?>">
         <?php endif; ?>
@@ -134,14 +135,18 @@
             <input type="text" id="direccion_fiscal" name="direccion_fiscal" maxlength="150" size="50" value="<?php echo s($datos['direccion_fiscal']); ?>">
         </p>
 
-        <input type="submit" value="<?php echo $id_editar ? 'Actualizar cliente' : 'Guardar cliente'; ?>">
+        <span class="acciones-form"><button type="submit" class="btn"><?php echo $id_editar ? 'Actualizar cliente' : 'Guardar cliente'; ?></button>
         <?php if ($id_editar): ?>
-            <a href="clientes.php">Cancelar</a>
-        <?php endif; ?>
+            <a href="clientes.php" class="btn btn-sec">Cancelar</a>
+        <?php endif; ?></span>
     </form>
 
-    <h2>Clientes registrados</h2>
-    <table border="1" cellpadding="4">
+    </section>
+
+    <section class="tarjeta">
+        <h2>Clientes registrados</h2>
+    <div class="tabla-scroll">
+    <table class="tabla">
         <tr><th>ID</th><th>Nombre</th><th>RFC</th><th>Dirección fiscal</th><th>Acciones</th></tr>
         <?php foreach ($clientes as $c): ?>
             <tr>
@@ -150,17 +155,18 @@
                 <td><?php echo s($c->rfc); ?></td>
                 <td><?php echo s($c->direccion_fiscal); ?></td>
                 <td>
-                    <a href="clientes.php?editar=<?php echo s($c->id); ?>">Editar</a>
+                    <a href="clientes.php?editar=<?php echo s($c->id); ?>" class="btn btn-sec btn-sm">Editar</a>
 
-                    <form method="POST" action="eliminar.php" style="display:inline;"
+                    <form method="POST" action="<?php echo s(urlSrc('delete/eliminar.php')); ?>" style="display:inline;"
                           onsubmit="return confirm('¿Seguro que quieres eliminar este cliente?');">
                         <input type="hidden" name="tipo" value="clientes">
                         <input type="hidden" name="id" value="<?php echo s($c->id); ?>">
-                        <input type="submit" value="Eliminar">
+                        <button type="submit" class="btn btn-peligro btn-sm">Eliminar</button>
                     </form>
                 </td>
             </tr>
         <?php endforeach; ?>
     </table>
-</body>
-</html>
+    </div>
+    </section>
+<?php require_once __DIR__ . '/../../views/footer.php'; ?>

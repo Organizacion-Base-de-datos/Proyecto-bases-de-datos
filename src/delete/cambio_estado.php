@@ -1,8 +1,8 @@
 <?php
-    require_once __DIR__ . '../../../includes/app.php';
+    require_once __DIR__ . '/../../includes/app.php';
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header('Location: index.php');
+        header('Location: ' . urlSrc('index.php'));
         exit;
     }
 
@@ -19,11 +19,13 @@
         exit('Tipo de registro inválido');
     }
 
+    requerirAcceso($tipo);
+
     $clase  = $tablas[$tipo]['clase'];
     $pagina = $tablas[$tipo]['pagina'];
 
     function volver(string $pagina, string $msg): void {
-        header("Location: {$pagina}?msg={$msg}");
+        header("Location: " . urlSrc("create_update/{$pagina}") . "?msg={$msg}");
         exit;
     }
 

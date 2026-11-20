@@ -1,7 +1,7 @@
 <?php
-    require_once __DIR__ . '../../../includes/app.php';
+    require_once __DIR__ . '/../../includes/app.php';
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header('Location: index.php');
+        header('Location: ' . urlSrc('index.php'));
         exit;
     }
 
@@ -16,7 +16,7 @@
     ];
 
     function volver(string $pagina, string $msg): void {
-        header("Location: {$pagina}?msg={$msg}");
+        header("Location: " . urlSrc("create_update/{$pagina}") . "?msg={$msg}");
         exit;
     }
 
@@ -27,6 +27,9 @@
         http_response_code(400);
         exit('Tipo de registro inválido');
     }
+
+    // El tipo de registro coincide con la clave del módulo (clientes, ventas, roles...)
+    requerirAcceso($tipo);
 
     $clase  = $tablas[$tipo]['clase'];
     $pagina = $tablas[$tipo]['pagina'];

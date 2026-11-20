@@ -1,5 +1,6 @@
 <?php
-    require_once __DIR__ . '../../../includes/app.php';
+    require_once __DIR__ . '/../../includes/app.php';
+    requerirAcceso('roles');
 
     $alertas = [];
     $exito = false;
@@ -72,61 +73,68 @@
 
     $lista = Rol::all();
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roles</title>
-</head>
-<body>
-    <h1><?php echo $id_editar ? 'Editar rol' : 'Registrar rol'; ?></h1>
+<?php require_once __DIR__ . '/../../views/header.php'; ?>
+
+    <div class="encabezado-pagina">
+        <h1>Roles</h1>
+        <button type="button" class="btn" id="btn-nuevo" aria-controls="panel-form">+ Nuevo</button>
+    </div>
 
     <?php if (isset($mensajes[$msg])): ?>
-        <p style="color:<?php echo $mensajes[$msg][0]; ?>;"><?php echo s($mensajes[$msg][1]); ?></p>
+        <p class="aviso aviso-<?php echo $mensajes[$msg][0] === 'green' ? 'ok' : 'error'; ?>"><?php echo s($mensajes[$msg][1]); ?></p>
     <?php endif; ?>
 
     <?php foreach ($alertas as $alerta): ?>
-        <p style="color:red;"><?php echo s($alerta); ?></p>
+        <p class="aviso aviso-error aviso-form"><?php echo s($alerta); ?></p>
     <?php endforeach; ?>
 
     <?php if ($exito): ?>
-        <p style="color:green;">Rol guardado correctamente</p>
+        <p class="aviso aviso-ok">Rol guardado correctamente</p>
     <?php endif; ?>
 
-    <form method="POST" action="rol.php">
+    <section class="tarjeta panel-form" id="panel-form">
+        <h2><?php echo $id_editar ? 'Editar rol' : 'Registrar rol'; ?></h2>
+
+    <form method="POST" action="rol.php" class="form-registro">
         <?php if ($id_editar): ?>
             <input type="hidden" name="id" value="<?php echo s($id_editar); ?>">
         <?php endif; ?>
 
-        <label for="nombre">Nombre</label>
-        <input type="text" id="nombre" name="nombre" maxlength="50" placeholder="Ej. Vendedor" value="<?php echo s($nombre); ?>">
-        <input type="submit" value="<?php echo $id_editar ? 'Actualizar' : 'Guardar'; ?>">
+        <p>
+            <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" name="nombre" maxlength="50" placeholder="Ej. Vendedor" value="<?php echo s($nombre); ?>
+        </p>">
+        <span class="acciones-form"><button type="submit" class="btn"><?php echo $id_editar ? 'Actualizar' : 'Guardar'; ?></button>
 
         <?php if ($id_editar): ?>
-            <a href="rol.php">Cancelar</a>
-        <?php endif; ?>
+            <a href="rol.php" class="btn btn-sec">Cancelar</a>
+        <?php endif; ?></span>
     </form>
 
-    <h2>Roles registrados</h2>
-    <table border="1" cellpadding="4">
+    </section>
+
+    <section class="tarjeta">
+        <h2>Roles registrados</h2>
+    <div class="tabla-scroll">
+    <table class="tabla">
         <tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr>
         <?php foreach ($lista as $item): ?>
             <tr>
                 <td><?php echo s($item->id); ?></td>
                 <td><?php echo s($item->nombre); ?></td>
                 <td>
-                    <a href="rol.php?editar=<?php echo s($item->id); ?>">Editar</a>
+                    <a href="rol.php?editar=<?php echo s($item->id); ?>" class="btn btn-sec btn-sm">Editar</a>
 
-                    <form method="POST" action="eliminar.php" style="display:inline;"
+                    <form method="POST" action="<?php echo s(urlSrc('delete/eliminar.php')); ?>" style="display:inline;"
                           onsubmit="return confirm('¿Seguro que quieres eliminar este registro?');">
                         <input type="hidden" name="tipo" value="roles">
                         <input type="hidden" name="id" value="<?php echo s($item->id); ?>">
-                        <input type="submit" value="Eliminar">
+                        <button type="submit" class="btn btn-peligro btn-sm">Eliminar</button>
                     </form>
                 </td>
             </tr>
         <?php endforeach; ?>
     </table>
-</body>
-</html>
+    </div>
+    </section>
+<?php require_once __DIR__ . '/../../views/footer.php'; ?>

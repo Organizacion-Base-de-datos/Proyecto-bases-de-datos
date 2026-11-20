@@ -1,5 +1,6 @@
 <?php
-    require_once __DIR__ . '../../../includes/app.php';
+    require_once __DIR__ . '/../../includes/app.php';
+    requerirAcceso('ventas');
 
     date_default_timezone_set('America/Mexico_City');
 
@@ -147,27 +148,27 @@
 
     $ventas = Venta::SQL("SELECT * FROM Ventas ORDER BY fecha DESC");
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ventas</title>
-</head>
-<body>
-    <h1><?php echo $id_editar ? 'Editar venta #' . s($id_editar) : 'Registrar venta'; ?></h1>
+<?php require_once __DIR__ . '/../../views/header.php'; ?>
+
+    <div class="encabezado-pagina">
+        <h1>Ventas</h1>
+        <button type="button" class="btn" id="btn-nuevo" aria-controls="panel-form">+ Nuevo</button>
+    </div>
 
     <?php if (isset($mensajes[$msg])): ?>
-        <p style="color:<?php echo $mensajes[$msg][0]; ?>;"><?php echo s($mensajes[$msg][1]); ?></p>
+        <p class="aviso aviso-<?php echo $mensajes[$msg][0] === 'green' ? 'ok' : 'error'; ?>"><?php echo s($mensajes[$msg][1]); ?></p>
     <?php endif; ?>
 
     <?php foreach ($alertas as $alerta): ?>
-        <p style="color:red;"><?php echo s($alerta); ?></p>
+        <p class="aviso aviso-error aviso-form"><?php echo s($alerta); ?></p>
     <?php endforeach; ?>
 
     <?php if ($exito): ?>
-        <p style="color:green;">Venta guardada correctamente. Total: $<?php echo number_format($totalVenta, 2); ?></p>
+        <p class="aviso aviso-ok">Venta guardada correctamente. Total: $<?php echo number_format($totalVenta, 2); ?></p>
     <?php endif; ?>
+
+    <section class="tarjeta panel-form" id="panel-form">
+        <h2><?php echo $id_editar ? 'Editar venta #' . s($id_editar) : 'Registrar venta'; ?></h2>
 
     <?php if (empty($clientes) || empty($empleados) || (!$id_editar && empty($productos))): ?>
         <p>
@@ -177,7 +178,7 @@
             un <a href="productos.php">producto con stock</a>.
         </p>
     <?php else: ?>
-    <form method="POST" action="ventas.php">
+    <form method="POST" action="ventas.php" class="form-registro">
         <?php if ($id_editar): ?>
             <input type="hidden" name="id" value="<?php echo s($id_editar); ?>">
         <?php endif; ?>
@@ -221,8 +222,8 @@
                 <small>En una venta solo se pueden corregir el cliente y el empleado.
                 Para cambiar productos, elimina la venta (se devuelve el stock) y registra otra.</small>
             </p>
-            <input type="submit" value="Actualizar venta">
-            <a href="ventas.php">Cancelar</a>
+            <span class="acciones-form"><button type="submit" class="btn">Actualizar venta</button>
+            <a href="ventas.php" class="btn btn-sec">Cancelar</a></span>
         <?php else: ?>
             <fieldset>
                 <legend>Productos</legend>
@@ -240,7 +241,7 @@
             </fieldset>
 
             <p><strong>Total: $<span id="total">0.00</span></strong></p>
-            <input type="submit" value="Registrar venta">
+            <span class="acciones-form"><button type="submit" class="btn">Registrar venta</button></span>
         <?php endif; ?>
     </form>
 
@@ -260,8 +261,12 @@
     <?php endif; ?>
     <?php endif; ?>
 
-    <h2>Ventas registradas</h2>
-    <table border="1" cellpadding="4">
+    </section>
+
+    <section class="tarjeta">
+        <h2>Ventas registradas</h2>
+    <div class="tabla-scroll">
+    <table class="tabla">
         <tr>
             <th>ID</th><th>Fecha</th><th>Cliente</th><th>Empleado</th><th>Productos</th><th>Total</th><th>Acciones</th>
         </tr>
@@ -285,17 +290,18 @@
                 <td><?php echo s(implode(', ', $nombresProductos)); ?></td>
                 <td>$<?php echo number_format((float)$v->total, 2); ?></td>
                 <td>
-                    <a href="ventas.php?editar=<?php echo s($v->id); ?>">Editar</a>
+                    <a href="ventas.php?editar=<?php echo s($v->id); ?>" class="btn btn-sec btn-sm">Editar</a>
 
-                    <form method="POST" action="eliminar.php" style="display:inline;"
+                    <form method="POST" action="<?php echo s(urlSrc('delete/eliminar.php')); ?>" style="display:inline;"
                           onsubmit="return confirm('¿Eliminar esta venta? Se devolverá el stock de sus productos.');">
                         <input type="hidden" name="tipo" value="ventas">
                         <input type="hidden" name="id" value="<?php echo s($v->id); ?>">
-                        <input type="submit" value="Eliminar">
+                        <button type="submit" class="btn btn-peligro btn-sm">Eliminar</button>
                     </form>
                 </td>
             </tr>
         <?php endforeach; ?>
     </table>
-</body>
-</html>
+    </div>
+    </section>
+<?php require_once __DIR__ . '/../../views/footer.php'; ?>

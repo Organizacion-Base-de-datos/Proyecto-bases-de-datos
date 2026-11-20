@@ -1,5 +1,6 @@
 <?php
-    require_once __DIR__ . '../../../includes/app.php';
+    require_once __DIR__ . '/../../includes/app.php';
+    requerirAcceso('promociones');
 
     $alertas = [];
     $exito = false;
@@ -150,32 +151,32 @@
 
     $promociones = Promocion::all();
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Promociones</title>
-</head>
-<body>
-    <h1><?php echo $id_editar ? 'Editar promoción' : 'Registrar promoción'; ?></h1>
+<?php require_once __DIR__ . '/../../views/header.php'; ?>
+
+    <div class="encabezado-pagina">
+        <h1>Promociones</h1>
+        <button type="button" class="btn" id="btn-nuevo" aria-controls="panel-form">+ Nuevo</button>
+    </div>
 
     <?php if (isset($mensajes[$msg])): ?>
-        <p style="color:<?php echo $mensajes[$msg][0]; ?>;"><?php echo s($mensajes[$msg][1]); ?></p>
+        <p class="aviso aviso-<?php echo $mensajes[$msg][0] === 'green' ? 'ok' : 'error'; ?>"><?php echo s($mensajes[$msg][1]); ?></p>
     <?php endif; ?>
 
     <?php foreach ($alertas as $alerta): ?>
-        <p style="color:red;"><?php echo s($alerta); ?></p>
+        <p class="aviso aviso-error aviso-form"><?php echo s($alerta); ?></p>
     <?php endforeach; ?>
 
     <?php if ($exito): ?>
-        <p style="color:green;">Promoción guardada correctamente</p>
+        <p class="aviso aviso-ok">Promoción guardada correctamente</p>
     <?php endif; ?>
+
+    <section class="tarjeta panel-form" id="panel-form">
+        <h2><?php echo $id_editar ? 'Editar promoción' : 'Registrar promoción'; ?></h2>
 
     <?php if (empty($categorias)): ?>
         <p>Primero registra al menos una categoría en <a href="categorias.php">categorias.php</a>.</p>
     <?php else: ?>
-    <form method="POST" action="promociones.php">
+    <form method="POST" action="promociones.php" class="form-registro">
         <?php if ($id_editar): ?>
             <input type="hidden" name="id" value="<?php echo s($id_editar); ?>">
         <?php endif; ?>
@@ -220,16 +221,20 @@
         </fieldset>
 
         <p>
-            <input type="submit" value="<?php echo $id_editar ? 'Actualizar promoción' : 'Guardar promoción'; ?>">
+            <span class="acciones-form"><button type="submit" class="btn"><?php echo $id_editar ? 'Actualizar promoción' : 'Guardar promoción'; ?></button>
             <?php if ($id_editar): ?>
-                <a href="promociones.php">Cancelar</a>
-            <?php endif; ?>
+                <a href="promociones.php" class="btn btn-sec">Cancelar</a>
+            <?php endif; ?></span>
         </p>
     </form>
     <?php endif; ?>
 
-    <h2>Promociones registradas</h2>
-    <table border="1" cellpadding="4">
+    </section>
+
+    <section class="tarjeta">
+        <h2>Promociones registradas</h2>
+    <div class="tabla-scroll">
+    <table class="tabla">
         <tr>
             <th>ID</th><th>Nombre</th><th>Tipo</th><th>Descuento</th>
             <th>Vigencia</th><th>Categorías</th><th>Acciones</th>
@@ -253,17 +258,18 @@
                 <td><?php echo s($p->fecha_inicio); ?> a <?php echo s($p->fecha_fin); ?></td>
                 <td><?php echo s(implode(', ', $nombresCategorias)); ?></td>
                 <td>
-                    <a href="promociones.php?editar=<?php echo s($p->id); ?>">Editar</a>
+                    <a href="promociones.php?editar=<?php echo s($p->id); ?>" class="btn btn-sec btn-sm">Editar</a>
 
-                    <form method="POST" action="eliminar.php" style="display:inline;"
+                    <form method="POST" action="<?php echo s(urlSrc('delete/eliminar.php')); ?>" style="display:inline;"
                           onsubmit="return confirm('¿Seguro que quieres eliminar esta promoción?');">
                         <input type="hidden" name="tipo" value="promociones">
                         <input type="hidden" name="id" value="<?php echo s($p->id); ?>">
-                        <input type="submit" value="Eliminar">
+                        <button type="submit" class="btn btn-peligro btn-sm">Eliminar</button>
                     </form>
                 </td>
             </tr>
         <?php endforeach; ?>
     </table>
-</body>
-</html>
+    </div>
+    </section>
+<?php require_once __DIR__ . '/../../views/footer.php'; ?>

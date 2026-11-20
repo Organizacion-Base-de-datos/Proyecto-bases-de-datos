@@ -1,5 +1,6 @@
 <?php
-    require_once __DIR__ . '../../../includes/app.php';
+    require_once __DIR__ . '/../../includes/app.php';
+    requerirAcceso('productos');
 
     $alertas = [];
     $exito = false;
@@ -116,29 +117,29 @@
     $proveedores = Proveedor::all();
     $productos = Producto::all();
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Productos</title>
-</head>
-<body>
-    <h1><?php echo $id_editar ? 'Editar producto' : 'Registrar producto'; ?></h1>
+<?php require_once __DIR__ . '/../../views/header.php'; ?>
+
+    <div class="encabezado-pagina">
+        <h1>Productos</h1>
+        <button type="button" class="btn" id="btn-nuevo" aria-controls="panel-form">+ Nuevo</button>
+    </div>
 
     <?php if (isset($mensajes[$msg])): ?>
-        <p style="color:<?php echo $mensajes[$msg][0]; ?>;"><?php echo s($mensajes[$msg][1]); ?></p>
+        <p class="aviso aviso-<?php echo $mensajes[$msg][0] === 'green' ? 'ok' : 'error'; ?>"><?php echo s($mensajes[$msg][1]); ?></p>
     <?php endif; ?>
 
     <?php foreach ($alertas as $alerta): ?>
-        <p style="color:red;"><?php echo s($alerta); ?></p>
+        <p class="aviso aviso-error aviso-form"><?php echo s($alerta); ?></p>
     <?php endforeach; ?>
 
     <?php if ($exito): ?>
-        <p style="color:green;">Producto guardado correctamente</p>
+        <p class="aviso aviso-ok">Producto guardado correctamente</p>
     <?php endif; ?>
 
-    <form method="POST" action="productos.php">
+    <section class="tarjeta panel-form" id="panel-form">
+        <h2><?php echo $id_editar ? 'Editar producto' : 'Registrar producto'; ?></h2>
+
+    <form method="POST" action="productos.php" class="form-registro">
         <?php if ($id_editar): ?>
             <input type="hidden" name="id" value="<?php echo s($id_editar); ?>">
         <?php endif; ?>
@@ -193,14 +194,18 @@
             </select>
         </p>
 
-        <input type="submit" value="<?php echo $id_editar ? 'Actualizar producto' : 'Guardar producto'; ?>">
+        <span class="acciones-form"><button type="submit" class="btn"><?php echo $id_editar ? 'Actualizar producto' : 'Guardar producto'; ?></button>
         <?php if ($id_editar): ?>
-            <a href="productos.php">Cancelar</a>
-        <?php endif; ?>
+            <a href="productos.php" class="btn btn-sec">Cancelar</a>
+        <?php endif; ?></span>
     </form>
 
-    <h2>Productos registrados</h2>
-    <table border="1" cellpadding="4">
+    </section>
+
+    <section class="tarjeta">
+        <h2>Productos registrados</h2>
+    <div class="tabla-scroll">
+    <table class="tabla">
         <thead>
             <tr>
                 <th>ID</th><th>Nombre</th><th>Stock</th><th>Costo</th><th>Venta</th><th>Acciones</th>
@@ -215,18 +220,19 @@
                     <td><?php echo s($producto->precio_costo); ?></td>
                     <td><?php echo s($producto->precio_venta); ?></td>
                     <td>
-                        <a href="productos.php?editar=<?php echo s($producto->id); ?>">Editar</a>
+                        <a href="productos.php?editar=<?php echo s($producto->id); ?>" class="btn btn-sec btn-sm">Editar</a>
 
-                        <form method="POST" action="eliminar.php" style="display:inline;"
+                        <form method="POST" action="<?php echo s(urlSrc('delete/eliminar.php')); ?>" style="display:inline;"
                               onsubmit="return confirm('¿Seguro que quieres eliminar este producto?');">
                             <input type="hidden" name="tipo" value="productos">
                             <input type="hidden" name="id" value="<?php echo s($producto->id); ?>">
-                            <input type="submit" value="Eliminar">
+                            <button type="submit" class="btn btn-peligro btn-sm">Eliminar</button>
                         </form>
                     </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
-</body>
-</html>
+    </div>
+    </section>
+<?php require_once __DIR__ . '/../../views/footer.php'; ?>

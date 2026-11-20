@@ -1,5 +1,6 @@
 <?php
-    require_once __DIR__ . '../../../includes/app.php';
+    require_once __DIR__ . '/../../includes/app.php';
+    requerirAcceso('proveedores');
 
     $alertas = [];
     $exito = false;
@@ -140,29 +141,29 @@
     $proveedores = Proveedor::all();
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proveedores</title>
-</head>
-<body>
-    <h1><?php echo $id_editar ? 'Editar proveedor' : 'Registrar proveedor'; ?></h1>
+<?php require_once __DIR__ . '/../../views/header.php'; ?>
+
+    <div class="encabezado-pagina">
+        <h1>Proveedores</h1>
+        <button type="button" class="btn" id="btn-nuevo" aria-controls="panel-form">+ Nuevo</button>
+    </div>
 
     <?php if (isset($mensajes[$msg])): ?>
-        <p style="color:<?php echo $mensajes[$msg][0]; ?>;"><?php echo s($mensajes[$msg][1]); ?></p>
+        <p class="aviso aviso-<?php echo $mensajes[$msg][0] === 'green' ? 'ok' : 'error'; ?>"><?php echo s($mensajes[$msg][1]); ?></p>
     <?php endif; ?>
 
     <?php foreach ($alertas as $alerta): ?>
-        <p style="color:red;"><?php echo s($alerta); ?></p>
+        <p class="aviso aviso-error aviso-form"><?php echo s($alerta); ?></p>
     <?php endforeach; ?>
 
     <?php if ($exito): ?>
-        <p style="color:green;">Proveedor guardado correctamente</p>
+        <p class="aviso aviso-ok">Proveedor guardado correctamente</p>
     <?php endif; ?>
 
-    <form method="POST" action="proveedores.php">
+    <section class="tarjeta panel-form" id="panel-form">
+        <h2><?php echo $id_editar ? 'Editar proveedor' : 'Registrar proveedor'; ?></h2>
+
+    <form method="POST" action="proveedores.php" class="form-registro">
         <?php if ($id_editar): ?>
             <input type="hidden" name="id" value="<?php echo s($id_editar); ?>">
         <?php endif; ?>
@@ -197,14 +198,18 @@
             </label>
         </p>
 
-        <input type="submit" value="<?php echo $id_editar ? 'Actualizar proveedor' : 'Guardar proveedor'; ?>">
+        <span class="acciones-form"><button type="submit" class="btn"><?php echo $id_editar ? 'Actualizar proveedor' : 'Guardar proveedor'; ?></button>
         <?php if ($id_editar): ?>
-            <a href="proveedores.php">Cancelar</a>
-        <?php endif; ?>
+            <a href="proveedores.php" class="btn btn-sec">Cancelar</a>
+        <?php endif; ?></span>
     </form>
 
-    <h2>Proveedores registrados</h2>
-    <table border="1" cellpadding="4">
+    </section>
+
+    <section class="tarjeta">
+        <h2>Proveedores registrados</h2>
+    <div class="tabla-scroll">
+    <table class="tabla">
         <tr>
             <th>ID</th><th>Nombre</th><th>Contacto</th><th>Teléfono</th>
             <th>Correo</th><th>RFC</th><th>Dirección</th><th>Estado</th><th>Acciones</th>
@@ -220,17 +225,18 @@
             <td><?php echo s($prov->direccion); ?></td>
             <td><?php echo $prov->activo ? 'Activo' : 'Inactivo'; ?></td>
             <td>
-                <a href="proveedores.php?editar=<?php echo s($prov->id); ?>">Editar</a>
+                <a href="proveedores.php?editar=<?php echo s($prov->id); ?>" class="btn btn-sec btn-sm">Editar</a>
 
                 <form method="POST" action="proveedores.php" style="display:inline;"
                       onsubmit="return confirm('¿Cambiar el estado de este proveedor?');">
                     <input type="hidden" name="accion" value="cambiar_estado">
                     <input type="hidden" name="id" value="<?php echo s($prov->id); ?>">
-                    <input type="submit" value="<?php echo $prov->activo ? 'Desactivar' : 'Activar'; ?>">
+                    <button type="submit" class="btn btn-sec btn-sm"><?php echo $prov->activo ? 'Desactivar' : 'Activar'; ?></button>
                 </form>
             </td>
         </tr>
         <?php endforeach; ?>
     </table>
-</body>
-</html>
+    </div>
+    </section>
+<?php require_once __DIR__ . '/../../views/footer.php'; ?>

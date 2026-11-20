@@ -2,6 +2,7 @@
 
     require 'database.php';
     require 'funciones.php';
+    require 'auth.php';
     require_once __DIR__ . '/../models/ActiveRecord.php';
     require_once __DIR__ . '/../models/Empleado.php';
     require_once __DIR__ . '/../models/Categoria.php';
