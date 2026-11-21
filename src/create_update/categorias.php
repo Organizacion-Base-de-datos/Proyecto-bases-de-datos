@@ -102,8 +102,16 @@
 
         <p>
             <label for="nombre">Nombre</label>
-        <input type="text" id="nombre" name="nombre" maxlength="50" placeholder="Ej. Escritura" value="<?php echo s($nombre); ?>
-        </p>">
+            <input 
+                type="text" 
+                id="nombre" 
+                name="nombre" 
+                maxlength="50" 
+                placeholder="Ej. Escritura" 
+                value = <?php echo s($nombre); ?>
+            >
+        </p>
+        
         <span class="acciones-form"><button type="submit" class="btn"><?php echo $id_editar ? 'Actualizar' : 'Guardar'; ?></button>
 
         <?php if ($id_editar): ?>
