@@ -108,7 +108,7 @@
                 name="nombre" 
                 maxlength="50" 
                 placeholder="Ej. Vendedor" 
-                value=<?php echo s($nombre); ?>
+                value="<?php echo s($nombre); ?>"
             >
         </p>
         <span class="acciones-form"><button type="submit" class="btn"><?php echo $id_editar ? 'Actualizar' : 'Guardar'; ?></button>

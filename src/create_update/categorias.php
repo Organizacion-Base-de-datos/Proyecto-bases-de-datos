@@ -108,7 +108,7 @@
                 name="nombre" 
                 maxlength="50" 
                 placeholder="Ej. Escritura" 
-                value = <?php echo s($nombre); ?>
+                value="<?php echo s($nombre); ?>"
             >
         </p>
         
